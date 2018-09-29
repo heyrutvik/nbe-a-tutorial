@@ -14,6 +14,7 @@ object Demo extends App {
   assert(checking(Nil, Lam('x, Var('x)), Nat -> Nat) == Right(true))
 
   val three = Let('three, The(Nat, Add1(Add1(Add1(Zero)))))
+
   val plus = Let('+,
     The(
       Nat -> (Nat -> Nat),
@@ -21,8 +22,13 @@ object Demo extends App {
         Lam('k,
           Rec(Nat, Var('n), Var('k), Lam('pred, Lam('almostsum, Add1(Var('almostsum))))))))
   )
+
   println("checkProgram: ")
-  checkProgram(Nil, List(three, plus, App(Var('+), Var('three)), App(App(Var('+), Var('three)), Var('three))))
+  checkProgram(Nil,
+               List(three,
+                    plus,
+                    App(Var('+), Var('three)),
+                    App(App(Var('+), Var('three)), Var('three))))
 
   println("runProgram: ")
   runProgram(

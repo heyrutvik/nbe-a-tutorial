@@ -10,7 +10,6 @@ package nbe.untyped
   * 3 Normalizing Untyped λ-Calculus
   * http://davidchristiansen.dk/tutorials/nbe/#%28part._untyped-norm%29
   */
-
 object Tutorial {
 
   import Implicits._
@@ -39,7 +38,7 @@ object Tutorial {
     case Var(x) =>
       lookup(p, x) match {
         case Some((x, v)) => v
-        case _ => sys.error(s"eval: Unknown variable $x")
+        case _            => sys.error(s"eval: Unknown variable $x")
       }
     case Lam(x, b) =>
       CLOS(p, x, b)
@@ -51,13 +50,13 @@ object Tutorial {
   // do-ap
   def apply(fun: Value, arg: Value): Value = fun match {
     case CLOS(p, x, b) => eval(extend(p, x, arg), b)
-    case f: Neutral => NAp(f, arg)
-    case _ => sys.error(s"can not apply to $fun")
+    case f: Neutral    => NAp(f, arg)
+    case _             => sys.error(s"can not apply to $fun")
   }
 
   // read-back: convert a value back into its representation as abstract syntax
   def readBack(usedName: List[Symbol], v: Value): Expr = v match {
-    case NVar(x) => Var(x)
+    case NVar(x)     => Var(x)
     case NAp(e1, e2) => App(readBack(usedName, e1), readBack(usedName, e2))
     case CLOS(p, x, b) =>
       val fx = freshen(usedName, x) // create fresh name using x
@@ -86,20 +85,20 @@ object Implicits {
 
   implicit class ExprOps(e: Expr) {
     def notation: String = e match {
-      case Var(x) => x.name
+      case Var(x)         => x.name
       case Lam(x, Var(b)) => s"(λ${x.name}.${b.name})"
-      case Lam(x, b) => s"(λ${x.name}.(${b.notation}))"
-      case App(e1, e2) => s"(${e1.notation} ${e2.notation})"
-      case Let(x, b) => s"(define ${x.name} (${b.notation})"
+      case Lam(x, b)      => s"(λ${x.name}.(${b.notation}))"
+      case App(e1, e2)    => s"(${e1.notation} ${e2.notation})"
+      case Let(x, b)      => s"(define ${x.name} (${b.notation})"
     }
   }
 
   implicit class ValueOps(v: Value) {
     def string: String = v match {
       case CLOS(p, v, b) =>
-        s"Closure(${p.map{case (x, v) => s"${x.name} -> ${v.string}"}.mkString("[", ",", "]")}, " +
-        s"${v.name}, " +
-        s"${b.notation})"
+        s"Closure(${p.map { case (x, v) => s"${x.name} -> ${v.string}" }.mkString("[", ",", "]")}, " +
+          s"${v.name}, " +
+          s"${b.notation})"
     }
   }
 }
@@ -115,7 +114,10 @@ object ChurchNumeral {
   def withNumerals(e: Expr): Program = {
     List(
       Let(ZERO, Lam('f, Lam('x, Var('x)))),
-      Let(ADD1, Lam('n, Lam('f, Lam('x, App(Var('f), App(App(Var('n), Var('f)), Var('x))))))),
+      Let(ADD1,
+          Lam('n,
+              Lam('f,
+                  Lam('x, App(Var('f), App(App(Var('n), Var('f)), Var('x))))))),
       e
     )
   }
@@ -124,7 +126,7 @@ object ChurchNumeral {
   def toChurch(n: Int): Expr = {
     if (n == 0) Var(ZERO)
     else if (n >= 0) {
-      App(Var(ADD1), toChurch(n-1))
+      App(Var(ADD1), toChurch(n - 1))
     } else sys.error(s"toChurch: $n negative number not allowed")
   }
 }

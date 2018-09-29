@@ -9,7 +9,8 @@ package object nbe {
   type Program[A] = List[A]
 
   // assv
-  def lookup[A](env: Env[A], x: Symbol): Option[(Symbol, A)] = env.filter(_._1 == x).headOption
+  def lookup[A](env: Env[A], x: Symbol): Option[(Symbol, A)] =
+    env.filter(_._1 == x).headOption
 
   // extend
   def extend[A](p: Env[A], x: Symbol, v: A): Env[A] = (x, v) :: p

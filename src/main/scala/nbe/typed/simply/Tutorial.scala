@@ -7,7 +7,6 @@ package nbe.typed.simply
   * 6 Typed Normalization by Evaluation
   * http://davidchristiansen.dk/tutorials/nbe/#%28part._typed-nbe%29
   */
-
 object Tutorial {
 
   import Implicits._
@@ -49,7 +48,8 @@ object Tutorial {
   sealed trait Neutral extends Value
   case class NVar(x: Symbol) extends Neutral
   case class NAp(e1: Neutral, e2: Norm) extends Neutral
-  case class NRec(t: Type, target: Neutral, base: Norm, step: Norm) extends Neutral
+  case class NRec(t: Type, target: Neutral, base: Norm, step: Norm)
+      extends Neutral
 
   // type=? structural type equality
   def typeEq(t1: Type, t2: Type): Boolean = (t1, t2) match {
@@ -74,14 +74,14 @@ object Tutorial {
     case Var(x) =>
       lookup(ctx, x) match {
         case Some((_, t)) => Right(t)
-        case _ => Left(s"Variable ${x.name} not found")
+        case _            => Left(s"Variable ${x.name} not found")
       }
     case App(e1, e2) =>
       for {
         ft <- synthesis(ctx, e1)
         rt <- ft match {
           case at -> bt => checking(ctx, e2, at).map(_ => bt)
-          case _ => Left(s"Not a function type ${ft.string}")
+          case _        => Left(s"Not a function type ${ft.string}")
         }
       } yield (rt)
     case Let(_, _) => sys.error("synthesis: doesn't deal with define")
@@ -89,21 +89,26 @@ object Tutorial {
 
   // check
   def checking(ctx: Ctx, e: Expr, t: Type): Go[Boolean] = e match {
-    case Zero => if (typeEq(t, Nat)) Right(true) else Left(s"Tried to use $t for zero")
+    case Zero =>
+      if (typeEq(t, Nat)) Right(true) else Left(s"Tried to use $t for zero")
     case Add1(n) =>
       if (typeEq(t, Nat)) for (_ <- checking(ctx, n, Nat)) yield (true)
       else Left(s"Tried to use ${t.string} for add1")
     case Lam(x, b) =>
       t match {
-        case at -> bt => for (_ <- checking(extend(ctx, x, at), b, bt)) yield (true)
-        case aot => Left(s"Instead of -> type, got ${aot.string}") // any other type `ot`; non arrow
+        case at -> bt =>
+          for (_ <- checking(extend(ctx, x, at), b, bt)) yield (true)
+        case aot =>
+          Left(s"Instead of -> type, got ${aot.string}") // any other type `ot`; non arrow
       }
     case _ =>
       for {
         t2 <- synthesis(ctx, e)
         b <- {
           if (typeEq(t, t2)) Right(true)
-          else Left(s"Synthesized type ${t2.string} where type ${t.string} was expected")
+          else
+            Left(
+              s"Synthesized type ${t2.string} where type ${t.string} was expected")
         }
       } yield (b)
     case Let(_, _) => sys.error("checking: doesn't deal with define")
@@ -128,12 +133,12 @@ object Tutorial {
   // val
   def eval(p: Rho, e: Expr): Value = e match {
     case The(t, e1) => eval(p, e1)
-    case Zero => ZERO
-    case Add1(n) => ADD1(eval(p, n))
+    case Zero       => ZERO
+    case Add1(n)    => ADD1(eval(p, n))
     case Var(x) =>
       lookup(p, x) match {
         case Some((_, v)) => v
-        case _ => sys.error(s"eval: Unknown variable $x")
+        case _            => sys.error(s"eval: Unknown variable $x")
       }
     case Lam(x, b) => CLOS(p, x, b)
     case Rec(t, target, base, step) =>
@@ -144,26 +149,27 @@ object Tutorial {
 
   // do-ap
   def apply(fun: Value, arg: Value): Value = fun match {
-    case CLOS(p, x, e) => eval(extend(p, x, arg), e)
+    case CLOS(p, x, e)   => eval(extend(p, x, arg), e)
     case NEU(a -> b, ne) => NEU(b, NAp(ne, THE(a, arg)))
-    case _ => sys.error("apply: ")
+    case _               => sys.error("apply: ")
   }
 
   // do-rec
-  def rec(t: Type, target: Value, base: Value, step: Value): Value = target match {
-    case ZERO => base
-    case ADD1(n) =>
-      apply(apply(step, n), rec(t, n, base, step))
-    case NEU(Nat, ne) =>
-      NEU(t, NRec(t, ne, THE(t, base), THE(Nat -> (t -> t), step)))
-  }
+  def rec(t: Type, target: Value, base: Value, step: Value): Value =
+    target match {
+      case ZERO => base
+      case ADD1(n) =>
+        apply(apply(step, n), rec(t, n, base, step))
+      case NEU(Nat, ne) =>
+        NEU(t, NRec(t, ne, THE(t, base), THE(Nat -> (t -> t), step)))
+    }
 
   // read-back
   def readBack(usedNames: List[Symbol], t: Type, v: Value): Expr = t match {
     case Nat =>
       v match {
-        case ZERO => Zero
-        case ADD1(n) => Add1(readBack(usedNames, Nat, n))
+        case ZERO       => Zero
+        case ADD1(n)    => Add1(readBack(usedNames, Nat, n))
         case NEU(_, ne) => readBackNeutral(usedNames, ne)
       }
     case a -> b =>
@@ -176,9 +182,7 @@ object Tutorial {
   def readBackNeutral(usedNames: List[Symbol], ne: Neutral): Expr = ne match {
     case NVar(x) => Var(x)
     case NAp(fun, THE(at, arg)) =>
-      App(
-        readBackNeutral(usedNames, fun),
-        readBack(usedNames, at, arg))
+      App(readBackNeutral(usedNames, fun), readBack(usedNames, at, arg))
     case NRec(t, target, THE(bt, base), THE(st, step)) =>
       Rec(
         t,
@@ -195,13 +199,13 @@ object Tutorial {
 
   // defs->ctx
   def deltaToCtx(delta: Delta): Ctx = delta match {
-    case Nil => Nil
+    case Nil                    => Nil
     case (x, Def(t, _)) :: rest => extend(deltaToCtx(rest), x, t)
   }
 
   // defs->env
   def deltaToRho(delta: Delta): Rho = delta match {
-    case Nil => Nil
+    case Nil                    => Nil
     case (x, Def(_, v)) :: rest => extend(deltaToRho(rest), x, v)
   }
 
@@ -211,7 +215,8 @@ object Tutorial {
     case Let(x, e) :: rest =>
       for {
         t <- synthesis(deltaToCtx(delta), e)
-        d <- runProgram(extend(delta, x, Def(t, eval(deltaToRho(delta), e))), rest)
+        d <- runProgram(extend(delta, x, Def(t, eval(deltaToRho(delta), e))),
+                        rest)
       } yield (d)
     case e :: rest =>
       val ctx = deltaToCtx(delta)
@@ -234,22 +239,22 @@ object Implicits {
     def ->(t2: Type): Type = Fun(t1, t2)
 
     def string: String = t1 match {
-      case Nat => "Nat"
+      case Nat       => "Nat"
       case Fun(a, b) => s"(${a.string} -> ${b.string})"
     }
   }
 
   implicit class ExprOps(e: Expr) {
     def notation: String = e match {
-      case Var(x) => x.name
+      case Var(x)         => x.name
       case Lam(x, Var(b)) => s"(λ${x.name}.${b.name})"
-      case Lam(x, b) => s"(λ${x.name}.(${b.notation}))"
-      case App(e1, e2) => s"(${e1.notation} ${e2.notation})"
-      case Let(x, b) => s"(define ${x.name} (${b.notation})"
-      case The(t, e) => s"(the ${t.string} ${e.notation})"
+      case Lam(x, b)      => s"(λ${x.name}.(${b.notation}))"
+      case App(e1, e2)    => s"(${e1.notation} ${e2.notation})"
+      case Let(x, b)      => s"(define ${x.name} (${b.notation})"
+      case The(t, e)      => s"(the ${t.string} ${e.notation})"
       case Rec(t, target, base, step) =>
         s"(rec ${t.string} ${target.notation} ${base.notation} ${step.notation}"
-      case Zero => "zero"
+      case Zero    => "zero"
       case Add1(e) => s"(add1 ${e.notation})"
     }
   }
