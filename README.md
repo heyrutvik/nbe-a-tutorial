@@ -7,6 +7,6 @@ This repo contains a Scala port of the code that has been demonstrated in a [tut
 
 - [x] [Typed Normalization by Evaluation](https://github.com/heyrutvik/nbe-a-tutorial/tree/master/src/main/scala/nbe/typed/simply)
 
-- [x] [Normalizing Tartlet](https://github.com/heyrutvik/nbe-a-tutorial/tree/master/src/main/scala/nbe/typed/dependently), It's a tiny dependently-typed language (A Tiny Piece of [Pie](https://github.com/the-little-typer/pie))
+- [x] [Type checking the Tartlet](https://github.com/heyrutvik/nbe-a-tutorial/tree/master/src/main/scala/nbe/typed/dependently), It's a tiny dependently-typed language (A Tiny Piece of [Pie](https://github.com/the-little-typer/pie))
     
     - [ ] bidirectional type checking rules for Tartlet
