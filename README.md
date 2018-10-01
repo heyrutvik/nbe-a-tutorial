@@ -11,7 +11,7 @@ This repo contains a Scala port of the code that has been demonstrated in a [tut
     
     - [ ] bidirectional type checking rules for Tartlet
     
-    #### Tartlet can be extended with a number of features: (as [listed](http://davidchristiansen.dk/tutorials/nbe/#%28part._.Projects%29) in tutorial)
+    #### Feature list: (as [listed](http://davidchristiansen.dk/tutorials/nbe/#%28part._.Projects%29) in tutorial)
     
     - [ ] Add a sum type, Either, with constructors left and right.
     
